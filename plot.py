@@ -8,7 +8,7 @@ import signal
 
 class Plot:
 
-    def __init__(self, trainer: trainer.Trainer, num_targets: int, xlim=1, ylim=1, max_per_target: int=2):
+    def __init__(self, trainer: trainer.Trainer, num_targets: int, xlim=1, ylim=1, max_per_target: int=3):
         self.trainer = trainer
         self.fig, self.ax = plt.subplots()
         self.max_per_target = max_per_target
@@ -43,12 +43,12 @@ class Plot:
                     countFullScatters += 1
                 continue
             for ba in y:
-                scatterLists[target].append(ba)
+                scatterLists[target].append(ba.unsqueeze(dim=0))
         print(totalLoss)
         
         ## PLOT ##
         for idx, sc in enumerate(scatterLists):
-            arr = np.array(sc)
+            arr = torch.cat(sc, dim=0).numpy()
             if len(arr.shape) == 2 and arr.shape[1] == 2:
                 self.scatters[idx].set_offsets(arr)
         ## STOP ##

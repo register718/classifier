@@ -63,14 +63,13 @@ class MaxTrainer(Trainer):
         self.optimizerMin = optim.SGD(net.parameters(), maximize=True, lr=lr)
 
     def __lossF__(self, y1, y2):
-        y2 = y2.detach()
         return (torch.sum((y1-y2).pow(2)) + 1e-8).pow(-1)
     
     def trainingStep(self, x):
         in1, l1, in2, l2 = x
         y1 = self.net(in1); y2 = self.net(in2)
         loss = self.__lossF__(y1, y2)
-        if  loss > 1e6:
+        if  loss > 1e6 or True:
             #print("MAX", loss)
             loss.backward()
             self.optimizerMin.step()
