@@ -18,14 +18,16 @@ class NetOne(torch.nn.Module):
         x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2)) # [16, 10, 10] nach max pool -> [16, 5, 5]
         x = x.flatten(start_dim=1)
         x = self.fc1(x)
-        print(x)
+        #print(x)
         x = self.DReLU(x)
+        #x = F.relu(x)
         x = self.fc2(x)
-        print(x)
+        #print(x)
         x = self.DReLU(x)
+        #x = F.relu(x)
         x = self.fc3(x)
-        print(x)
-        x = self.DReLU(x)
+        #print(x)
+        #x = F.normalize(x, dim=0)
         return x
 
         

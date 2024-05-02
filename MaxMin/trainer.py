@@ -60,27 +60,24 @@ class MaxTrainer(Trainer):
 
     def __init__(self, net: torch.nn.Module, train_set, test_set, lr=1e-3, EPOCHS=10):
         super().__init__(net, train_set, test_set, EPOCHS=EPOCHS)
-        self.optimizerMin = optim.SGD(net.parameters(), maximize=True, lr=lr)
+        self.optimizerMin = optim.SGD(net.parameters(), maximize=False, lr=lr)
 
     def __lossF__(self, y1, y2):
-        return (torch.sum((y1-y2).pow(2)) + 1e-8).pow(-1)
+        return 1e-2 - torch.min(torch.tensor(1e-2), torch.sum((y1-y2).pow(2)))
     
     def trainingStep(self, x):
         in1, l1, in2, l2 = x
         y1 = self.net(in1); y2 = self.net(in2)
         loss = self.__lossF__(y1, y2)
-        if  loss > 1e6 or True:
-            #print("MAX", loss)
-            loss.backward()
-            self.optimizerMin.step()
-            self.optimizerMin.zero_grad()
+        loss.backward()
+        self.optimizerMin.step()
+        self.optimizerMin.zero_grad()
+        return loss.detach()
     
     def testStep(self, x):
         in1, l1, in2, l2 = x
         y1 = self.net(in1); y2 = self.net(in2)
         loss = self.__lossF__(y1, y2)
-        if loss < 1e6:
-            loss = 0
         return [(l1, loss, y1), (l2, loss, y2)]
 
 
@@ -89,7 +86,7 @@ class MinMaxTrainer(Trainer):
     def __init__(self, net: torch.nn.Module, train_set, test_set, lr=1e-3, EPOCHS=10):
         super().__init__(net, train_set, test_set, EPOCHS=EPOCHS)
         self.trainerMin = MinTrainer(net, train_set, test_set, lr=lr)
-        self.trainerMax = MaxTrainer(net, train_set, test_set, lr=lr)
+        self.trainerMax = MaxTrainer(net, train_set, test_set, lr=3e-2)
     
     def __step__(self, x, funcMax, funcMin):
         in1, l1, in2, l2 = x

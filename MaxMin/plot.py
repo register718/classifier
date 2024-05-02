@@ -13,7 +13,7 @@ class Plot:
         self.fig, self.ax = plt.subplots()
         self.max_per_target = max_per_target
         self.scatters = [self.ax.scatter(0, 0, s=5, label=f"Data {str(i)}", c=self.__genColor__()) for i in range(num_targets)]
-        self.ax.set(xlim=[-1, xlim], ylim=[-1, ylim])
+        self.ax.set(xlim=[-1, 1], ylim=[-1, 1])
         self.ax.legend()
         self.num_targets = num_targets
 
@@ -62,7 +62,7 @@ class Plot:
     def start_animation(self):
         print("Training of ", self.trainer.epochs, "epochs")
         self.ani = animation.FuncAnimation(fig=self.fig, func=self.update, frames=self.trainer.epochs, interval=0)
-        plt.show()
+        plt.show(block=True)
     
     def start_without_animation(self):
         self.stop = False
