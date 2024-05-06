@@ -28,8 +28,8 @@ with torch.no_grad():
         est_anch = model.forward_one(anchor)
         est_pos = model.forward_one(positive)
         est_neg = model.forward_one(negative)
-        dist_pos = torch.nn.functional.pairwise_distance(anchor, positive)
-        dist_neg = torch.nn.functional.pairwise_distance(anchor, negative)
+        dist_pos = torch.nn.functional.pairwise_distance(est_anch, est_pos)
+        dist_neg = torch.nn.functional.pairwise_distance(est_anch, est_neg)
         similar.append(dist_pos)
         dissimilar.append(dist_neg)
 
