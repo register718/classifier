@@ -4,13 +4,15 @@ from torchvision.transforms import ToTensor
 import torch
 import os
 
+
+
 class MNISTDataLoaderBase(Dataset):
 
     def __init__(self, train=True):
         def sortDataSet(dataSet):
             labels = torch.tensor([x[1] for x in dataSet])
             unique_labels, counts = torch.unique(labels, return_counts=True, sorted=True)
-            self.num_labels = len(unique_labels)
+            self.num_labels = len(unique_labels) - 2
             sort_labels = torch.argsort(labels)
             min_count = torch.min(counts)
             self.min_count = min_count
@@ -20,14 +22,14 @@ class MNISTDataLoaderBase(Dataset):
             
             idx_list = []
             counter = 0
-            for idx in sort_labels:
+            for idx in self.sort_labels:
                 # Check counter
-                if counter == min_count and labels[sort_labels[idx - 1]] == labels[sort_labels[idx - 1]]:
+                if counter == min_count and labels[self.sort_labels[idx - 1]] == labels[self.sort_labels[idx - 1]]:
                     continue
                 elif counter == min_count:
                     counter = 0
                 # Add next 2 idx
-                indexes = sort_labels[idx], sort_labels[idx + 1]
+                indexes = self.sort_labels[idx], self.sort_labels[idx + 1]
                 idx_list.append(indexes)
                 counter += 2
             return torch.tensor(idx_list)
@@ -46,6 +48,11 @@ class MNISTDataLoaderBase(Dataset):
 
     def __len__(self):
         return len(self.set)
+    
+    def getItemIneff(self, item):
+        idx = (item ** 2 + 2) % len(self)
+        while not self.data[idx][1] == item:
+            return self.data[idx]
     
     def __getitem__(self, idx):
         idx1, idx2 = self.set[idx]
