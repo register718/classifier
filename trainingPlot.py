@@ -19,5 +19,5 @@ trainer = T.MinMaxTrainer(net, trainSet, testSet, EPOCHS=EPOCHS)
 import plot
 
 plot = plot.Plot(trainer, 10)
-plot.start_without_animation()
+plot.start_animation()
 torch.save(net.state_dict(), f"./weights/plot_mnist_{str(EPOCHS)}.pt")
