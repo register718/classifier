@@ -1,5 +1,5 @@
-import dataset
+from datasets.dataset_imdb import SiameseIMDBDataset as SiameseDataset
 
-sets = dataset.SiameseIMGDataset("/media/hitchcock/data21/data")
+sets = SiameseDataset("/media/hitchcock/data21/data/imdb")
 
 print(sets[0])
