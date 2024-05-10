@@ -1,17 +1,12 @@
-import torch
-import tarfile
 import h5py
-from torchvision import datasets
 from torch.utils.data import Dataset
 import scipy.io as io
 import os
 from PIL import Image
 import numpy as np
 from os.path import join as j
+from tqdm import tqdm
 
-DEBUG = True
-if DEBUG:
-    from matplotlib import pyplot as plt
 
 def crop_to_square(image, top, bottom, left, right):
     def smallest_square_region(top, bottom, left, right):
@@ -80,7 +75,9 @@ class SiameseIMDBDataset(Dataset):
         h5Path = j(dataPath, "data.hdf5")
         if not os.path.isfile(h5Path):
             print("Create hdf5 Database")
-        self.createHDF5(dataPath, h5Path)
+            self.createHDF5(dataPath, h5Path)
+        #self.f = h5py.File(h5Path, mode="r")
+        
         
     def createHDF5(self, dataPath, h5Path):
         IMG_SIZE = 128
@@ -89,7 +86,7 @@ class SiameseIMDBDataset(Dataset):
         with h5py.File(h5Path, mode="w") as f:
             imgs = f.create_group("images")
             mt = f.create_group("meta")
-            for i in range(length):
+            for i in tqdm(range(length), desc="Creating Database"):
                 second_face = meta["second_face_score"][0,0][0,i]
                 if not np.isnan(second_face):
                     continue
@@ -97,20 +94,24 @@ class SiameseIMDBDataset(Dataset):
                 if first_face == np.Inf:
                     continue
                 name = str(meta["name"][0,0][0,i][0])
-                print(name)
+                #print(name)
                 full_path: str = str(meta["full_path"][0,0][0,i][0])
                 ## LOAD IMG ## 
-                print(full_path)
+                #print(full_path)
                 img_path = os.path.join(dataPath, "imdb", full_path)
                 if not os.path.isfile(img_path):
                     print("ERROR: File not found", img_path)
                     continue
-                fimage = Image.open(img_path)
-                image = np.asarray(fimage)
-                fimage.close()
+                try:
+                    fimage = Image.open(img_path)
+                    image = np.asarray(fimage)
+                    fimage.close()
+                except Exception as e:
+                    print(e)
+                    continue
                 ## Bild zu klein
                 if image.shape[0] < IMG_SIZE or image.shape[1] < IMG_SIZE or len(image.shape) == 2:
-                    print("Bild zu klein")
+                    #print("Bild zu klein")
                     continue
                 
                 if name not in mt:
