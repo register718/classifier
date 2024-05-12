@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 from os.path import join as j
 from tqdm import tqdm
+import torch
 
 
 def crop_to_square(image, top, bottom, left, right):
@@ -76,11 +77,39 @@ class SiameseIMDBDataset(Dataset):
         if not os.path.isfile(h5Path):
             print("Create hdf5 Database")
             self.createHDF5(dataPath, h5Path)
-        #self.f = h5py.File(h5Path, mode="r")
+        self.f = h5py.File(h5Path, mode="r")
+        ky = self.f["meta"].keys()
+        self.keys = []
+        for k in ky:
+            self.keys += [(k, x) for x in self.f["meta"][k]]
+        self.num_grps = len(self.f["meta"])
+        
+    
+    def __len__(self):
+        return len(self.keys)
+    
+    def __getitem__(self, index):
+        grp, idx = self.keys[index]
+        idxInt = int(idx)
+        idxSame = idxInt
+        while idxInt == idxSame:
+            idxSame = np.random.randint(0, len(self.f["meta"][grp].keys()))
+        idxOther = index
+        while self.keys[idxOther][0] == self.keys[index][0]:
+            idxOther = np.random.randint(0, self.num_grps)
+        grpOther, idxOther = self.keys[idxOther]
+        anchorPath = self.f["meta"][grp][idx].asstr()[()]
+        samePath = self.f["meta"][grp][str(idxSame)].asstr()[()]
+        otherPath = self.f["meta"][grpOther][idxOther].asstr()[()]
+        anchor = torch.from_numpy(self.f["images"][anchorPath][:])
+        same = torch.from_numpy(self.f["images"][samePath][:])
+        other = torch.from_numpy(self.f["images"][otherPath][:])
+        return anchor, same, other
+        
         
         
     def createHDF5(self, dataPath, h5Path):
-        IMG_SIZE = 128
+        IMG_SIZE = 220
         meta = io.loadmat(j(dataPath, "imdb.mat"))["imdb"]
         length = meta["name"][0,0].shape[1]
         with h5py.File(h5Path, mode="w") as f:
@@ -159,6 +188,10 @@ class SiameseIMDBDataset(Dataset):
                 #plt.show()
                 np_image = np_image / 256
                 imgs.create_dataset(full_path, data=np_image)
+            ## Check auf Einzelpersonen ##
+            for i in f["meta"].keys():
+                if len(f["meta"][i]) == 1:
+                    del f["meta"][i]
                     
                 
         

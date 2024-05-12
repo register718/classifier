@@ -2,23 +2,33 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import pytorch_lightning as pl
-from torchvision.models import Inception3, Inception_V3_Weights
 
 class FaceModel(pl.LightningModule):
     
     def __init__(self):
+        super(FaceModel, self).__init__()
         ## INPUT 128 x 128
-        pretrained = Inception3(weights=Inception_V3_Weights.DEFAULT)
         self.cnn = nn.Sequential(
-            pretrained,
+            nn.Conv3d(3, 64, (7, 7, 3)),
+            nn.MaxPool2d((2, 2)),
+            nn.Conv3d(64, 64, (5, 5, 5)),
+            nn.ReLU(),
+            nn.Conv3d(64, 64, (7, 7, 3)),
+            nn.MaxPool2d((5, 5)),
+            nn.ReLU(),
+            nn.Conv3d(64, 64, (3, 3)),
+            nn.MaxPool3d((2, 2)),
+            nn.Conv3d(64, 32, (3, 3)),
             nn.Flatten(),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Linear(123, 345),
+            nn.Sigmoid()
         )
     
     def forward(self, x):
         return self.cnn(x)
     
-    def tripletLoss(self, est_anchor, est_same, est_othern, margin=0.2):
+    def tripletLoss(self, est_anchor, est_same, est_other, margin=0.2):
         distance_positive = torch.sum((est_anchor - est_same)**2, dim=1)
         distance_negative = torch.sum((est_anchor - est_other)**2, dim=1)
         loss = torch.relu(distance_positive - distance_negative + margin)
@@ -30,7 +40,7 @@ class FaceModel(pl.LightningModule):
         est_anchor = self(anchor)
         est_same = self(same)
         est_other = self(other)
-        loss = self.tripletLoss(est_anchor, est_same, est_othern)
+        loss = self.tripletLoss(est_anchor, est_same, est_other)
         return loss
 
     def training_step(self, batch):
