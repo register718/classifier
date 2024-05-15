@@ -21,8 +21,11 @@ class FaceModel(pl.LightningModule):
             nn.Conv3d(64, 32, (3, 3)),
             nn.Flatten(),
             nn.ReLU(),
-            nn.Linear(123, 345),
-            nn.Sigmoid()
+            nn.Linear(1064, 2000),
+            nn.Sigmoid(),
+            nn.Linear(2000, 1500),
+            nn.ReLU(),
+            nn.Linear(1500, 1000)
         )
     
     def forward(self, x):
