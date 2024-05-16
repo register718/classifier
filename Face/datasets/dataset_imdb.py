@@ -77,11 +77,17 @@ class SiameseIMDBDataset(Dataset):
         if not os.path.isfile(h5Path):
             print("Create hdf5 Database")
             self.createHDF5(dataPath, h5Path)
-        self.f = h5py.File(h5Path, mode="r")
-        ky = self.f["meta"].keys()
-        self.keys = []
-        for k in ky:
-            self.keys += [(k, x) for x in self.f["meta"][k]]
+        self.f = h5py.File(h5Path, mode="r+")
+        if "keys" not in self.f:
+            ky = self.f["meta"].keys()
+            self.keys = []
+            for k in tqdm(ky, desc="Reading keys"):
+                self.keys += [(k, x) for x in self.f["meta"][k].keys() if self.f["meta"][k][x].asstr()[()] in self.f["images"]]
+            self.f.create_dataset("keys", data=self.keys)
+        else:
+            self.keys = self.f["keys"][:]
+        self.f.close()
+        self.f = h5py.File(h5Path, mode='r')
         self.num_grps = len(self.f["meta"])
         
     
@@ -92,7 +98,7 @@ class SiameseIMDBDataset(Dataset):
         grp, idx = self.keys[index]
         idxInt = int(idx)
         idxSame = idxInt
-        while idxInt == idxSame:
+        while idxInt == idxSame or self.f["meta"][grp][str(idxSame)].asstr()[()] not in self.f["images"]:
             idxSame = np.random.randint(0, len(self.f["meta"][grp].keys()))
         idxOther = index
         while self.keys[idxOther][0] == self.keys[index][0]:
